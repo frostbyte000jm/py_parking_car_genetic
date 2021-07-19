@@ -1,4 +1,7 @@
-import pygame, math
+import pygame, math, random
+
+from classes.sprites import Sprite
+from classes.createBoard import createParkingSpots, createPlayerCar, createNPCCars
 
 # initialize game
 pygame.init()
@@ -12,83 +15,13 @@ screen = pygame.display.set_mode((nScreenW, nScreenH))
 # Title and Icon
 pygame.display.set_caption("Parking A Car")
 
-
 # background
+background = pygame.image.load('graphics/parking spot/parkingLot.png')
 
-class Car:
-    def __init__(self, x, y, height, width, img):
-        self.x = x - width / 2
-        self.y = y - height / 2
-        self.height = height
-        self.width = width
-        self.rect = pygame.Rect(x, y, height, width)
-        self.surface = pygame.Surface((height, width))
-        self.surface.blit(img, (0, 0))
-        self.angle = 0
-        self.turn = 0.9
-        self.speed = 0
-        self.accel = 1.5
-
-    def draw(self):
-        self.rect.topleft = (int(self.x), int(self.y))
-        rotated = pygame.transform.rotate(self.surface, self.angle)
-        surface_rect = self.surface.get_rect(topleft=self.rect.topleft)
-        new_rect = rotated.get_rect(center=surface_rect.center)
-        screen.blit(rotated, new_rect.topleft)
-
-class Parking:
-    def __init__(self, x, y, height, width, img):
-        self.x = x - width / 2
-        self.y = y - height / 2
-        self.height = height
-        self.width = width
-        self.rect = pygame.Rect(x, y, height, width)
-        self.surface = pygame.Surface((height, width))
-        self.surface.blit(img, (0, 0))
-        self.angle = 0
-        self.turn = 0.9
-        self.speed = 0
-        self.accel = 1.5
-
-    def draw(self):
-        self.rect.topleft = (int(self.x), int(self.y))
-        rotated = pygame.transform.rotate(self.surface, self.angle)
-        surface_rect = self.surface.get_rect(topleft=self.rect.topleft)
-        new_rect = rotated.get_rect(center=surface_rect.center)
-        screen.blit(rotated, new_rect.topleft)
-
-
-# Create Main Car
-playerCarImg = pygame.image.load('graphics/cars/car1.png')
-playerCarImgW = 80
-playerCarImgH = 80
-player_xpos = 370
-player_ypos = 480
-playerCar = Car(player_xpos, player_ypos, playerCarImgH, playerCarImgW, playerCarImg)
-
-# Create NPC1 Car
-rnpcCarImg = [pygame.image.load('graphics/cars/car2.png'), pygame.image.load('graphics/cars/car3.png')]
-npcCarImgW = 80
-npcCarImgH = 80
-npc_xpos = [150, 350]
-npc_ypos = [100, 100]
-npc_num = 2
-rNpcCar = []
-
-for i in range(npc_num):
-    rNpcCar.append(Car(npc_xpos[i], npc_ypos[i], npcCarImgH, npcCarImgW, rnpcCarImg[i]))
-
-# Create Parking Spot
-rParkingSpotImg = [pygame.image.load('graphics/parking spot/parkingSpot.png')]
-nParkingSpotW = 90
-nParkingSpotH = 90
-rParkSpot_xpos = [150, 350]
-rParkSpot_ypos = [100, 100]
-nParkSpot_count = 2
-rParkingSpot = []
-
-for i in range(nParkSpot_count):
-    rParkingSpot.append(Parking(rParkSpot_xpos[i], rParkSpot_ypos[i], nParkingSpotH, nParkingSpotW, rParkingSpotImg[0]))
+# Create Game Board
+rParkingSpot = createParkingSpots()
+playerCar = createPlayerCar()
+rNpcCar = createNPCCars(rParkingSpot)
 
 
 def isCollision(npcCar, playCar):
@@ -97,11 +30,15 @@ def isCollision(npcCar, playCar):
     doCollide = npcCar.rect.colliderect(playCar.rect)
     # print("doCollide",doCollide)
     if doCollide:
+        npcCar.x += playCar.speed
         print("CRASH!!!")
 
 
 def isParked(ps_rect, car_rect):
-    print("ps_rect", ps_rect, "car_rect", car_rect)
+    # print("ps_rect", ps_rect, "car_rect", car_rect)
+    doParked = ps_rect.contains(car_rect)
+    if doParked:
+        print("Parked!!!")
 
 
 # declarations
@@ -135,18 +72,9 @@ while bRunning:
                 print("pressed Left")
                 nTurn = playerCar.turn
 
-                # if nSpeed != 0:
-                #     nTurn = playerCar.turn
-                # else:
-                #     nTurn = 0
             if event.key == pygame.K_RIGHT:
                 print("pressed Right")
                 nTurn = -playerCar.turn
-
-                # if nSpeed != 0:
-                #     nTurn = -playerCar.turn
-                # else:
-                #     nTurn = 0
 
         # key up
         if event.type == pygame.KEYUP:
@@ -167,21 +95,30 @@ while bRunning:
     playerCar.y += playerCar.speed * math.cos(math.radians(-playerCar.angle))
     # print("speed", playerCar.speed, "angle", playerCar.angle)
 
-    # Check for collison
+    # Check for collision
     for nc in rNpcCar:
         isCollision(nc, playerCar)
 
     # Check for Parked
-    #isParked(imgParkingSpot_rect, playerCar.rect)
+    # print("Player Car - x:", playerCar.goal_x, "y:", playerCar.goal_y)
+    # print("Player Car - x: ", playerCar.x, "y: ", playerCar.y, "rect: ", playerCar.rect, "surface: ", playerCar.surface, "angle:", playerCar.angle)
+
+    for ps in rParkingSpot:
+        # print("Parking Spot - x:", ps.x, "y: ", ps.y, "rect: ",ps.rect, "surface: ",ps.surface)
+        isParked(ps.rect, playerCar.rect)
 
     # draw game
     screen.fill((0, 0, 0))
+    screen.blit(background, (0, 0))
     for ps in rParkingSpot:
-        ps.draw()
-    playerCar.draw()
+        rotated, topleft = ps.draw()
+        screen.blit(rotated, topleft)
+    rotated, topleft = playerCar.draw()
+    screen.blit(rotated, topleft)
     for nc in rNpcCar:
-        nc.draw()
-    #screen.blit(imgParkingSpot,(imgParkingSpot_xpos,imgParkingSpot_ypos))
+        rotated, topleft = nc.draw()
+        screen.blit(rotated, topleft)
+    # screen.blit(imgParkingSpot,(imgParkingSpot_xpos,imgParkingSpot_ypos))
     pygame.display.flip()
     clock.tick(60)
 
