@@ -23,4 +23,6 @@ class Sprite:
         rotated = pygame.transform.rotate(self.surface, self.angle)
         surface_rect = self.surface.get_rect(topleft=self.rect.topleft)
         new_rect = rotated.get_rect(center=surface_rect.center)
+        self.rect = new_rect
+        #print("rotated",rotated,"surface_rect",surface_rect,"new_rect",new_rect)
         return rotated, new_rect.topleft
