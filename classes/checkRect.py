@@ -23,3 +23,14 @@ def isParked(ps_rect, car_rect):
     if doParked:
         print("Parked!!!")
         return True
+
+
+def DistToSpot(rPlayCar, rParkSpot):
+    print("playerCar, Parking Spot: ",rPlayCar,rParkSpot)
+    nPlayerX = rPlayCar.x
+    nPlayerY = rPlayCar.y
+    nParkSpotX = rParkSpot.x
+    nParkSpotY = rParkSpot.y
+
+    nDist = math.sqrt((nPlayerX - nParkSpotX) ** 2 + (nPlayerY - nParkSpotY) ** 2)
+    return nDist
